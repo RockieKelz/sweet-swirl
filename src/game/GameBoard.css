@@ -32,7 +32,7 @@ h1 {
 }
 .grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 20px;
     width: 100%;
     max-width: 560px; 
@@ -43,6 +43,13 @@ h1 {
     color: #85796b;
     margin: 0 auto; 
     aspect-ratio: 1 / 1; 
+}
+.grid div{
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-sizing: border-box;
+    padding: 5px;
 }
 .score-board {
   background-color: rgb(240, 193, 247);
