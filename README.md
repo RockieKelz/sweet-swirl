@@ -57,3 +57,9 @@ Make sure you have [Node.js](https://nodejs.org) installed.
 
 ## 📜 License
 Distributed under the MIT License.
+
+<br>
+
+---
+**Developer Note:**
+This project is a small project apart of my reconnecting to Javascript series.

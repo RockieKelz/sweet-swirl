@@ -1,34 +1,30 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+.text-container {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out; /* Fast fade-in speed */
 }
 
-.hero {
+.text-container.visible {
+  opacity: 1;
+}
+
+.text-container.fade-out {
+  opacity: 0;
+  transition: opacity 3.0s ease-in-out; /* Slow fade-out speed */
+}
+
+/*container for stacking the splash screen images together */
+.stacker {
   position: relative;
 
-  .base,
-  .top,
+  .base,  
   .bottom {
     inset-inline: 0;
     margin: 0 auto;
   }
 
   .base {
-    width: 170px;
+    width: 300px;
+    height: 300px;
     position: relative;
     z-index: 0;
   }
@@ -40,19 +36,24 @@
 
   .top {
     z-index: 1;
-    top: 30px;
-    height: 45px;
-    transform: perspective(2000px) rotateZ(340deg) rotateX(34deg) rotateY(17deg)
-      scale(1.4);
+    top: 35px;
+    height: 88px;
+    left: calc(50% - 25px);
+    margin-left: -15.5px;
+    margin-right: auto;
+
+    /* Combined 3D perspective/rotation with continuous counter-clockwise rotation */
+    transform: perspective(2000px) rotateZ(340deg) rotateX(34deg) rotateY(17deg) scale(1.4);
+    animation:spin-counter-clockwise 2s linear infinite;
   }
 
   .bottom {
     z-index: 0;
-    top: 107px;
-    height: 26px;
+    top: 158px;
+    height: 108px;
     width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
+    transform: perspective(2000px) rotateZ(20deg) rotateX(20deg) rotateY(15deg) scale(0.8);
+    animation:spin-clockwise 2s linear infinite;
   }
 }
 
@@ -69,116 +70,31 @@
     gap: 18px;
   }
 }
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
+  /* Keyframes for continuous rotation */
+@keyframes spin-clockwise {
+  from {
+    transform: perspective(2000px) rotateZ(20deg) rotateX(20deg) rotateY(15deg) scale(0.8) rotate(0deg);
   }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
+  to {
+    transform: perspective(2000px) rotateZ(20deg) rotateX(20deg) rotateY(15deg) scale(0.8) rotate(360deg);
   }
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+/* Keyframes for continuous rotation */
+@keyframes spin-counter-clockwise {
+  from {
+    transform: perspective(2000px) rotateZ(20deg) rotateX(20deg) rotateY(15deg) scale(0.8) rotate(0deg);
+  }
+  to {
+    transform: perspective(2000px) rotateZ(20deg) rotateX(20deg) rotateY(15deg) scale(0.8) rotate(360deg);
   }
 }
 
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
+@keyframes spin-counter-clockwise {
+  from {
+    transform: perspective(2000px) rotateZ(340deg) rotateX(34deg) rotateY(17deg) scale(1.4) rotate(0deg);
   }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
-  width: 100%;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+  to {
+    transform: perspective(2000px) rotateZ(340deg) rotateX(34deg) rotateY(17deg) scale(1.4) rotate(-360deg);
   }
 }
