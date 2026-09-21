@@ -1,33 +1,97 @@
 import { useEffect, useState } from 'react'
 import { blue, green, orange, pink, purple, red, white } from '../assets'
 import './Gameboard.css'
+import { checkForColumnMatches, checkForRowMatches } from './MatchLogic'
 
+// Array of icons used to represent each cell's colors
 const cellColors = [
-            'url(' + blue + ')',
-            'url(' + green + ')',
-            'url(' + orange + ')',
-            'url(' + pink + ')',
-            'url(' + purple + ')',
-            'url(' + red + ')',
-            'url(' + white + ')'
-        ]
-        
-function Gameboard() {
-    //create the gameboard  
-    const [squares, setSquares] = useState([])
-    const width = 6
-    
-    useEffect(() => {
-        const randomSquares = []
-        for (let i = 0; i < width*width; i++) {
-            const randomColor = cellColors[Math.floor(Math.random() * cellColors.length)]
-            randomSquares.push(randomColor)
-        }
-        setSquares(randomSquares)
-    }
-    , [])
+    'url(' + blue + ')',
+    'url(' + green + ')',
+    'url(' + orange + ')',
+    'url(' + pink + ')',
+    'url(' + purple + ')',
+    'url(' + red + ')',
+    'url(' + white + ')'
+]
 
-        
+function Gameboard() {
+    const [cells, setCells] = useState([])
+    const [cellBeingDragged, setCellBeingDragged] = useState(null)
+    const [cellBeingReplaced, setCellBeingReplaced] = useState(null)
+    
+    const width = 6 // Default width of the game board (6x6 grid)
+
+    /* ======== Initialize the board ========= */
+    const createBoard = () => {
+        const gameArray = []
+        for (let i = 0; i < width * width; i++) {
+            const randomColor = cellColors[Math.floor(Math.random() * cellColors.length)]
+            gameArray.push(randomColor)
+        }
+        setCells(gameArray)
+    }
+
+    useEffect(() => {
+        createBoard()
+    }, [])
+
+    /* ========= Drag and Drop handlers ======== */
+    const dragStart = (e) => {
+        setCellBeingDragged(e.target)
+    }
+
+    const dragDrop = (e) => {
+        setCellBeingReplaced(e.target)
+    }
+
+    const dragEnd = () => {
+        // Ensure both elements exist before reading attributes
+        if (!cellBeingDragged || !cellBeingReplaced) return
+
+        //Get the IDs of the dragged and replaced cells
+        const draggedId = parseInt(cellBeingDragged.getAttribute('id'))
+        const replacedId = parseInt(cellBeingReplaced.getAttribute('id'))
+        // Calculate the row and column of the dragged and replaced cells
+        const row = Math.floor(draggedId / width)
+        const column = draggedId % width
+        const replacedRow = Math.floor(replacedId / width)
+        const replacedColumn = replacedId % width
+
+        // Check if the dragged and replaced cells are adjacent
+        const isAdjacent = Math.abs(row - replacedRow) + Math.abs(column - replacedColumn) === 1
+
+        if (isAdjacent) {
+            // Create a copy of the squares array to test the swap
+            const newSquares = [...cells]
+            const temp = newSquares[replacedId]
+            newSquares[replacedId] = newSquares[draggedId]
+            newSquares[draggedId] = temp
+            
+            const isPartOfAMatch = (index, grid) => {
+                const color = grid[index]
+                if (!color) return false
+                
+                // Check if there is a horizontal match containing this index
+                const rowMatchCheck = checkForRowMatches(grid, index, color, width)
+                // Check if there is a vertical match containing this index
+                const columnMatchCheck = checkForColumnMatches(grid, index, color, width)
+                if (rowMatchCheck || columnMatchCheck) {
+                    return true
+                }
+            }
+            // Only allow the move if the dragged tile OR replaced tile caused a match
+            if (isPartOfAMatch(draggedId, newSquares) || isPartOfAMatch(replacedId, newSquares)) {
+                setCells(newSquares)
+            } else {
+                console.log("Invalid move: This swap doesn't create a match!")            }
+        } else {
+            console.log("Invalid move: Tiles are not adjacent!")
+        }
+        // Reset drag tracking states
+        setCellBeingDragged(null)
+        setCellBeingReplaced(null)
+    }
+
     return (
         <div className="game-container">
             <header className="game-header">
@@ -36,24 +100,22 @@ function Gameboard() {
             <main className="game-body">
                 <section className="score-board">
                     <h3>score</h3>
-                    <h1 id="score"></h1> 
+                    <h1 id="score">{/*score*/}</h1> 
                 </section>
-                <div className={`grid`}>
-                    {squares.map((color, index) => (
+                <div className="grid">
+                    {cells.map((color, index) => (
                         <div 
                             key={index}                      
                             id={index}
                             draggable="true"
-o                           onDragStart={(e) => e.dataTransfer.setData("text/plain", index)}
+                            onDragStart={dragStart}
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => {
-                                const draggedIndex = e.dataTransfer.getData("text/plain")
-                                const targetIndex = index
-                                const newSquares = [...squares]
-                                newSquares[targetIndex] = squares[draggedIndex]
-                                newSquares[draggedIndex] = squares[targetIndex]
-                                setSquares(newSquares)}}
-                        style={{ backgroundImage: color }}></div>
+                            onDragEnter={(e) => e.preventDefault()}
+                            onDragLeave={(e) => e.preventDefault()}
+                            onDrop={dragDrop}
+                            onDragEnd={dragEnd}
+                            style={{ backgroundImage: color }}
+                        />
                     ))}
                 </div>
             </main>
