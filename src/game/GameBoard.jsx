@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { blue, green, orange, pink, purple, red, white } from '../assets'
 import './Gameboard.css'
 import { checkForColumnMatches, checkForRowMatches } from './MatchLogic'
+import { processMatches } from './RemovePieces'
 
 // Array of icons used to represent each cell's colors
 const cellColors = [
@@ -18,17 +19,25 @@ function Gameboard() {
     const [cells, setCells] = useState([])
     const [cellBeingDragged, setCellBeingDragged] = useState(null)
     const [cellBeingReplaced, setCellBeingReplaced] = useState(null)
-    
+    const [matchedCells, setMatchedCells] = useState([])
+
+    // Function to delay immediate drop/clear action until its annimation finishes
+    const showMatches = async (matches) => {
+        setMatchedCells(matches)
+        await new Promise (r => setTimeout(r, 300))
+        setMatchedCells([])
+}
+
     const width = 6 // Default width of the game board (6x6 grid)
+    const createRandomColor = () => { return cellColors[Math.floor(Math.random() * cellColors.length)] } //For random game piece selection
 
     /* ======== Initialize the board ========= */
-    const createBoard = () => {
+    const createBoard = async () => {
         const gameArray = []
         for (let i = 0; i < width * width; i++) {
-            const randomColor = cellColors[Math.floor(Math.random() * cellColors.length)]
-            gameArray.push(randomColor)
+            gameArray.push(createRandomColor())
         }
-        setCells(gameArray)
+        setCells(await processMatches(gameArray, width, createRandomColor, showMatches))
     }
 
     useEffect(() => {
@@ -44,7 +53,7 @@ function Gameboard() {
         setCellBeingReplaced(e.target)
     }
 
-    const dragEnd = () => {
+    const dragEnd = async () => {
         // Ensure both elements exist before reading attributes
         if (!cellBeingDragged || !cellBeingReplaced) return
 
@@ -62,10 +71,10 @@ function Gameboard() {
 
         if (isAdjacent) {
             // Create a copy of the squares array to test the swap
-            const newSquares = [...cells]
-            const temp = newSquares[replacedId]
-            newSquares[replacedId] = newSquares[draggedId]
-            newSquares[draggedId] = temp
+            const newSpaces = [...cells]
+            const temp = newSpaces[replacedId]
+            newSpaces[replacedId] = newSpaces[draggedId]
+            newSpaces[draggedId] = temp
             
             const isPartOfAMatch = (index, grid) => {
                 const color = grid[index]
@@ -80,8 +89,10 @@ function Gameboard() {
                 }
             }
             // Only allow the move if the dragged tile OR replaced tile caused a match
-            if (isPartOfAMatch(draggedId, newSquares) || isPartOfAMatch(replacedId, newSquares)) {
-                setCells(newSquares)
+            if (isPartOfAMatch(draggedId, newSpaces) || isPartOfAMatch(replacedId, newSpaces)) {
+                console.log("Valid move: This swap creates a match!")
+                const procesedMatches = await processMatches(newSpaces, width, createRandomColor, showMatches)
+                setCells(procesedMatches)
             } else {
                 console.log("Invalid move: This swap doesn't create a match!")            }
         } else {
@@ -107,6 +118,7 @@ function Gameboard() {
                         <div 
                             key={index}                      
                             id={index}
+                            className={matchedCells.includes(index) ? 'matched' : ''}
                             draggable="true"
                             onDragStart={dragStart}
                             onDragOver={(e) => e.preventDefault()}

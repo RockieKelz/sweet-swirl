@@ -66,6 +66,27 @@ h1 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) inset, 0 1px 0 #fff;
   color: #3c1bf8;
 }
+.matched {
+    animation: match-pop 300ms ease-in-out;
+}
+
+@keyframes match-pop {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.25);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
 
 @media (max-width: 1024px) {
   .game-body {
