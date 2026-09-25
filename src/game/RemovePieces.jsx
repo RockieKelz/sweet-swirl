@@ -64,14 +64,17 @@ export const movePiecesDown = (grid, width) => {
 /* ======= AUTOMATIC MATCH CHECK AFTER REGENERATION ======*/
 export const processMatches = async (grid, width, createRandomColor, showMatches) => {
     let newGrid = [...grid]
+    let matchesMade = 0
 
     while (true) {
         //Find the matches in the array
         const matches = findMatches(newGrid, width)
         // If no matches → board is resolved
         if (matches.length === 0) {
-            return newGrid
+            break
         }
+
+        matchesMade += matches.length
         // Tell React which pieces are matched and need to be "animated" away
         await showMatches(matches)
         // Remove matched pieces
@@ -84,5 +87,9 @@ export const processMatches = async (grid, width, createRandomColor, showMatches
         newGrid = newGrid.map(
             cell => cell ?? createRandomColor()
         )
+    }
+    return { 
+        procesedMatches: newGrid,
+        matchCount: matchesMade
     }
 }

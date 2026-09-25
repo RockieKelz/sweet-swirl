@@ -3,6 +3,7 @@ import { blue, green, orange, pink, purple, red, white } from '../assets'
 import './Gameboard.css'
 import { checkForColumnMatches, checkForRowMatches } from './MatchLogic'
 import { processMatches } from './RemovePieces'
+import { calculateScore } from './Scoring'
 
 // Array of icons used to represent each cell's colors
 const cellColors = [
@@ -20,6 +21,7 @@ function Gameboard() {
     const [cellBeingDragged, setCellBeingDragged] = useState(null)
     const [cellBeingReplaced, setCellBeingReplaced] = useState(null)
     const [matchedCells, setMatchedCells] = useState([])
+    const [score, setScore] = useState(0)
 
     // Function to delay immediate drop/clear action until its annimation finishes
     const showMatches = async (matches) => {
@@ -33,11 +35,18 @@ function Gameboard() {
 
     /* ======== Initialize the board ========= */
     const createBoard = async () => {
+        console.log(score)
         const gameArray = []
         for (let i = 0; i < width * width; i++) {
             gameArray.push(createRandomColor())
         }
-        setCells(await processMatches(gameArray, width, createRandomColor, showMatches))
+        //Check to process any matches and/or score updates
+        const { procesedMatches, matchCount} = await processMatches(gameArray, width, createRandomColor, showMatches)
+        setCells(procesedMatches)
+        //Grant points with any matches
+        if (matchCount > 0) {
+            setScore(prevScore => prevScore + calculateScore(matchCount))                
+        }
     }
 
     useEffect(() => {
@@ -91,8 +100,11 @@ function Gameboard() {
             // Only allow the move if the dragged tile OR replaced tile caused a match
             if (isPartOfAMatch(draggedId, newSpaces) || isPartOfAMatch(replacedId, newSpaces)) {
                 console.log("Valid move: This swap creates a match!")
-                const procesedMatches = await processMatches(newSpaces, width, createRandomColor, showMatches)
+                //Update scorce and process matches
+                const { procesedMatches, matchCount }= await processMatches(newSpaces, width, createRandomColor, showMatches)
+                setScore(prevScore => prevScore + calculateScore(matchCount))                
                 setCells(procesedMatches)
+                console.log(score)
             } else {
                 console.log("Invalid move: This swap doesn't create a match!")            }
         } else {
@@ -111,7 +123,7 @@ function Gameboard() {
             <main className="game-body">
                 <section className="score-board">
                     <h3>score</h3>
-                    <h1 id="score">{/*score*/}</h1> 
+                    <h1 id="score">{score}</h1> 
                 </section>
                 <div className="grid">
                     {cells.map((color, index) => (
