@@ -38,4 +38,59 @@ export const checkForRowMatches = (grid, index, color, width) => {
         return matched 
     }
 
+/* ===== CHECK IF A PARTICULAR CELL IS PART OF A MATCH ===== */
+export const isPartOfAMatch = (index, grid, width) => {
+    const color = grid[index]
+
+    if (!color) return false
+
+    return (
+        // Check if there is a horizontal match containing this index
+        checkForRowMatches(grid, index, color, width) ||
+        checkForColumnMatches(grid, index, color, width) // Check if there is a horizontal match containing this index
+    )
+}
+
+/* ===== CHECK IF THE BOARD HAS ANY POSSIBLE MOVEs ===== */
+export const hasPossibleMove = (grid, width) => {
+    for (let index = 0; index < grid.length; index++) {
+        const row = Math.floor(index / width)
+        const column = index % width
+
+        // Check for swaps to the right
+        if (column < width - 1) {
+            const newGrid = [...grid]
+
+            newGrid[index] = grid[index + 1]
+            newGrid[index + 1] = grid[index]
+
+            if (
+                isPartOfAMatch(index, newGrid, width) ||
+                isPartOfAMatch(index + 1, newGrid, width)
+            ) {
+                return true
+            }
+        }
+
+        // Check for swaps downward
+        if (row < width - 1) {
+            const newGrid = [...grid]
+
+            newGrid[index] = grid[index + width]
+            newGrid[index + width] = grid[index]
+
+            if (
+                isPartOfAMatch(index, newGrid, width) ||
+                isPartOfAMatch(index + width, newGrid, width)
+            ) {
+                return true
+            }
+        }
+    }
+
+    return false
+}
+
+
+
 

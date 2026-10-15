@@ -93,3 +93,17 @@ export const processMatches = async (grid, width, createRandomColor, showMatches
         matchCount: matchesMade
     }
 }
+/* ===== REARRANGE BOARD ===== */
+export const rearrangeBoard = (grid) => {
+    const newGrid = [...grid]
+
+    for (let i = newGrid.length - 1; i > 0; i--) {
+        const randomIndex = Math.floor(Math.random() * (i + 1))
+
+        const temp = newGrid[i]
+        newGrid[i] = newGrid[randomIndex]
+        newGrid[randomIndex] = temp
+    }
+
+    return newGrid
+}
