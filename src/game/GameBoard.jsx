@@ -26,8 +26,8 @@ function Gameboard() {
     const [gameOver, setGameOver] = useState(false)
     const [reshuffling, setReshuffling] = useState(false)
     const delay = (milliseconds) => {
-    return new Promise(resolve => setTimeout(resolve, milliseconds))
-}
+    return new Promise(resolve => setTimeout(resolve, milliseconds))}
+    const [exited, setExited] = useState(false) //Track if the user has exited the game to prevent state updates on unmounted component
 
     // Function to delay immediate drop/clear action until its annimation finishes
     const showMatches = async (matches) => {
@@ -61,7 +61,7 @@ function Gameboard() {
         const rearranged = rearrangeBoard(procesedMatches)
         setRearrangeCount(rearranges + 1)
         // Check the rearranged board again while reshuffling message is still available
-        const playableBoard = await getPlayableBoard(rearranged, rearranges - 1)
+        const playableBoard = await getPlayableBoard(rearranged, rearranges + 1)
         setReshuffling(false)
         return playableBoard
     }
@@ -70,7 +70,7 @@ function Gameboard() {
     const createRandomColor = () => { return cellColors[Math.floor(Math.random() * cellColors.length)] } //For random game piece selection
 
     /* ======== Initialize the board ========= */
-    const createBoard = async () => {
+    const createBoard = async (rearranges = 0) => {
         const gameArray = []
         for (let i = 0; i < width * width; i++) {
             gameArray.push(createRandomColor())
@@ -78,6 +78,22 @@ function Gameboard() {
         //Make sure theres playable moves
         const playableBoard = await getPlayableBoard(gameArray, rearrangeCount)
         setCells(playableBoard)
+    }
+
+    /* ======== Play again button handler ======== */
+    const handlePlayAgain = async () => {
+        // Reset all game states
+        setGameOver(false)
+        setScore(0)
+        setRearrangeCount(0)
+        setReshuffling(false)
+        setMatchedCells([])
+        setCellBeingDragged(null)
+        setCellBeingReplaced(null)
+        setExited(false)
+        // Clear the board and create a new one
+        setCells([])
+        await createBoard(0)
     }
 
     useEffect(() => {
@@ -137,43 +153,59 @@ function Gameboard() {
             <header className="game-header">
                 <h1>Sweet Swirl</h1>
             </header>
-            <main className="game-body">
-                <section className="score-board">
-                    <h3>score</h3>
-                    <h1 id="score">{score}</h1> 
-                    <h8>Reshuffles Available:</h8>
-                    <h7>{5-rearrangeCount}</h7>
-                </section>
-                    <div className="grid">
-                        {cells.map((color, index) => (
-                            <div 
-                                key={index}                      
-                                id={index}
-                                className={matchedCells.includes(index) ? 'matched' : ''}
-                                draggable={!gameOver && !reshuffling}
-                                onDragStart={dragStart}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDragEnter={(e) => e.preventDefault()}
-                                onDragLeave={(e) => e.preventDefault()}
-                                onDrop={dragDrop}
-                                onDragEnd={dragEnd}
-                                style={{ backgroundImage: color }}
-                            />
-                        ))}
-                    
-                    {reshuffling && (
-                        <div className="board-message reshuffling-message">
-                            <div className="thinking-text">
-                                RESHUFFLING<span className="dots">...</span>
+            { exited ? (
+                <div className="exit-container">
+                    <div className="exit-message-card">
+                        <h2>Thanks for playing Sweet Swirl!</h2>
+                        <button onClick={handlePlayAgain} className="play-again-button">
+                            Play Again
+                        </button>                    
+                    </div>
+                </div>
+            ) : (
+                <main className="game-body">
+                    <section className="score-board">
+                        <h3>score</h3>
+                        <h1 id="score">{score}</h1> 
+                        <h8>Reshuffles Available:</h8>
+                        <h7>{5-rearrangeCount}</h7>
+                    </section>
+                        <div className="grid">
+                            {cells.map((color, index) => (
+                                <div 
+                                    key={index}                      
+                                    id={index}
+                                    className={matchedCells.includes(index) ? 'matched' : ''}
+                                    draggable={!gameOver && !reshuffling}
+                                    onDragStart={dragStart}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDragEnter={(e) => e.preventDefault()}
+                                    onDragLeave={(e) => e.preventDefault()}
+                                    onDrop={dragDrop}
+                                    onDragEnd={dragEnd}
+                                    style={{ backgroundImage: color }}
+                                />
+                            ))}
+                        
+                        {reshuffling && (
+                            <div className="board-message reshuffling-message">
+                                <div className="thinking-text">
+                                    RESHUFFLING<span className="dots">...</span>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    {gameOver && (
-                        <div className="game-over-message">
-                            Game Over!
-                        </div>
-                    )}</div>
-            </main>
+                        )}
+                        {gameOver && (
+                            <div className="game-over-message">
+                                <h2> Game Over! </h2>
+                                <p> No More Moves. Play again? </p>
+                                <div className="game-over-buttons">
+                                    <button className="play-again-button" onClick={handlePlayAgain}>Play Again</button>
+                                    <button className="exit-button" onClick={() => setExited(true)}>Exit</button>
+                                </div>
+                            </div>
+                        )}</div>
+                </main>
+            )}
         </div>
     )
 }
