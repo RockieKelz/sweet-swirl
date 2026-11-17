@@ -28,6 +28,14 @@ function Gameboard() {
     const delay = (milliseconds) => {
     return new Promise(resolve => setTimeout(resolve, milliseconds))}
     const [exited, setExited] = useState(false) //Track if the user has exited the game to prevent state updates on unmounted component
+    const [levelingUp, setLevelingUp] = useState(false) // Track if the player is leveling up to prevent state updates on unmounted component
+    const [boardSize, setBoardSize] = useState(4) // Track the current board size state based on score
+    const getBoardSize = (score) => {
+    if (score < 75) return 4;
+    if (score <= 150) return 5;
+    if (score <= 300) return 6;
+    if (score <= 500) return 7;
+    return 8;}
 
     // Function to delay immediate drop/clear action until its annimation finishes
     const showMatches = async (matches) => {
@@ -36,20 +44,26 @@ function Gameboard() {
         setMatchedCells([])
     }
     // Function to check if there any moves availableon the gameboard
-    const getPlayableBoard = async (board, rearranges = 0) => {
+    const getPlayableBoard = async (board, rearranges = 0, size = boardSize, hasReshuffled = false) => {
         //Check to process any matches and/or score updates
-        const { procesedMatches, matchCount} = await processMatches(board, width, createRandomColor, showMatches)
+        const { procesedMatches, matchCount} = await processMatches(board, size, createRandomColor, showMatches)
         //Grant points with any matches
         if (matchCount > 0) {
             setScore(prevScore => prevScore + calculateScore(matchCount))                
         }
         // Board has at least one possible move
-        if (hasPossibleMove(procesedMatches, width)) {
+        if (hasPossibleMove(procesedMatches, size)) {
+            if (hasReshuffled){
+                setRearrangeCount(prev => prev + 1)
+            }
+            setReshuffling(false)
             return procesedMatches
         }
+        
         // Maximum # of rearranges reached
         if (rearranges >= 5) {
             console.log('Game Over!')
+            setReshuffling(false)
             setGameOver(true)
             return procesedMatches
         }
@@ -59,24 +73,23 @@ function Gameboard() {
         await delay(300)
         //Rearrange the board
         const rearranged = rearrangeBoard(procesedMatches)
-        setRearrangeCount(rearranges + 1)
+        
         // Check the rearranged board again while reshuffling message is still available
-        const playableBoard = await getPlayableBoard(rearranged, rearranges + 1)
-        setReshuffling(false)
-        return playableBoard
+        return await getPlayableBoard(rearranged, rearranges + 1, size, true)
+    
     }
 
-    const width = 6 // Default width of the game board (6x6 grid)
+    const width = boardSize // Set the width of the board based on the current board size state
     const createRandomColor = () => { return cellColors[Math.floor(Math.random() * cellColors.length)] } //For random game piece selection
 
     /* ======== Initialize the board ========= */
-    const createBoard = async (rearranges = 0) => {
+    const createBoard = async (size = boardSize, rearranges = 0) => {
         const gameArray = []
-        for (let i = 0; i < width * width; i++) {
+        for (let i = 0; i < size * size; i++) {
             gameArray.push(createRandomColor())
         }
         //Make sure theres playable moves
-        const playableBoard = await getPlayableBoard(gameArray, rearrangeCount)
+        const playableBoard = await getPlayableBoard(gameArray, rearranges, size)
         setCells(playableBoard)
     }
 
@@ -85,6 +98,9 @@ function Gameboard() {
         // Reset all game states
         setGameOver(false)
         setScore(0)
+        setBoardSize(4)
+        setMatchedCells([])
+        setLevelingUp(false)
         setRearrangeCount(0)
         setReshuffling(false)
         setMatchedCells([])
@@ -93,12 +109,28 @@ function Gameboard() {
         setExited(false)
         // Clear the board and create a new one
         setCells([])
-        await createBoard(0)
+        await createBoard(4, 0)
     }
-
+    
     useEffect(() => {
-        createBoard()
-    }, [])
+        createBoard(4, 0) // Initialize the board with a 4x4 grid and 0 rearranges
+    }, []) 
+
+        useEffect(() => {
+        const newBoardSize = getBoardSize(score) // Increase board size every level up from points, max size of 8
+        if (newBoardSize > boardSize) {
+            setLevelingUp(true)
+            const newRearrangeCount = Math.max(0, rearrangeCount - 1)
+            const timer = setTimeout(async () => {
+                setBoardSize(newBoardSize)
+                setRearrangeCount(newRearrangeCount) // Subtract one to increase number of rearranges avaiable when leveling up
+                setLevelingUp(false)
+                await createBoard(newBoardSize, newRearrangeCount) // Create a new board with the updated size
+        }, 2000)
+
+        return () => clearTimeout(timer)
+    }
+}, [score, boardSize]) // Check for level up whenever the score changes
 
     /* ========= Drag and Drop handlers ======== */
     const dragStart = (e) => {
@@ -136,7 +168,7 @@ function Gameboard() {
             if (isPartOfAMatch(draggedId, newSpaces, width) || isPartOfAMatch(replacedId, newSpaces, width)) {
                 console.log("Valid move: This swap creates a match!")
                 //Make sure there's playable moves
-                const playableBoard = await getPlayableBoard(newSpaces, rearrangeCount)               
+                const playableBoard = await getPlayableBoard(newSpaces, rearrangeCount, boardSize)               
                 setCells(playableBoard)
             } else {
                 console.log("Invalid move: This swap doesn't create a match!")            }
@@ -170,7 +202,10 @@ function Gameboard() {
                         <h8>Reshuffles Available:</h8>
                         <h7>{5-rearrangeCount}</h7>
                     </section>
-                        <div className="grid">
+                        <div className="grid"
+                            style={{
+                                gridTemplateColumns: `repeat(${width}, 1fr)`
+                            }}>
                             {cells.map((color, index) => (
                                 <div 
                                     key={index}                      
@@ -192,6 +227,14 @@ function Gameboard() {
                                 <div className="thinking-text">
                                     RESHUFFLING<span className="dots">...</span>
                                 </div>
+                            </div>
+                        )}
+                        {levelingUp && (
+                            <div className="board-message level-up-message">
+                                <div className="thinking-text">
+                                    LEVEL UP!
+                                </div>
+                                <p>Increasing board size...</p>
                             </div>
                         )}
                         {gameOver && (

@@ -54,6 +54,8 @@ export const isPartOfAMatch = (index, grid, width) => {
 /* ===== CHECK IF THE BOARD HAS ANY POSSIBLE MOVEs ===== */
 export const hasPossibleMove = (grid, width) => {
     for (let index = 0; index < grid.length; index++) {
+        if (!grid[index]) continue
+        
         const row = Math.floor(index / width)
         const column = index % width
 

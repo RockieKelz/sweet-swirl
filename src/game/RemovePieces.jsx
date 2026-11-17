@@ -65,8 +65,11 @@ export const movePiecesDown = (grid, width) => {
 export const processMatches = async (grid, width, createRandomColor, showMatches) => {
     let newGrid = [...grid]
     let matchesMade = 0
+    let iterations = 0
+    const MAX_ITERATIONS = 100
 
-    while (true) {
+    while ( iterations < MAX_ITERATIONS) {
+        iterations++
         //Find the matches in the array
         const matches = findMatches(newGrid, width)
         // If no matches → board is resolved
@@ -87,6 +90,9 @@ export const processMatches = async (grid, width, createRandomColor, showMatches
         newGrid = newGrid.map(
             cell => cell ?? createRandomColor()
         )
+    }
+    if (iterations === MAX_ITERATIONS) {
+        onsole.warn('Maximum match-processing iterations reached!')
     }
     return { 
         procesedMatches: newGrid,
